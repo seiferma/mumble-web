@@ -49,8 +49,6 @@ function ContextMenu () {
 
 function ConnectDialog () {
   var self = this
-  self.address = ko.observable('')
-  self.port = ko.observable('443')
   self.token = ko.observable('')
   self.username = ko.observable('')
   self.password = ko.observable('')
@@ -60,7 +58,7 @@ function ConnectDialog () {
   self.hide = self.visible.bind(self.visible, false)
   self.connect = function () {
     self.hide()
-    ui.connect(self.username(), self.address(), self.port(), self.token(), self.password())
+    ui.connect(self.username(), self.token(), self.password())
   }
 }
 
@@ -325,16 +323,17 @@ class GlobalBindings {
       return '[' + new Date().toLocaleTimeString('en-US') + ']'
     }
 
-    this.connect = (username, host, port, token, password) => {
+    this.connect = (username, token, password) => {
       this.resetClient()
 
-      this.remoteHost(host)
-      this.remotePort(port)
+      this.remoteHost(location.hostname)
+      this.remotePort(location.port)
 
-      log('Connecting to server ', host)
+      const url = `${location.protocol == 'http:' ? 'ws' : 'wss'}://${location.host}${location.pathname}`
+      log('Connecting to server ', url)
 
       // TODO: token
-      this.connector.connect(`wss://${host}:${port}`, {
+      this.connector.connect(url, {
         username: username,
         password: password
       }).done(client => {
@@ -865,16 +864,6 @@ window.onload = function () {
   var useJoinDialog = queryParams.joinDialog
   if (queryParams.matrix) {
     useJoinDialog = true
-  }
-  if (queryParams.address) {
-    ui.connectDialog.address(queryParams.address)
-  } else {
-    useJoinDialog = false
-  }
-  if (queryParams.port) {
-    ui.connectDialog.port(queryParams.port)
-  } else {
-    useJoinDialog = false
   }
   if (queryParams.token) {
     ui.connectDialog.token(queryParams.token)
