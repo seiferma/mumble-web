@@ -105,8 +105,6 @@ function AddChannelDialog () {
 
 function ConnectDialog () {
   var self = this
-  self.address = ko.observable('')
-  self.port = ko.observable('')
   self.tokenToAdd = ko.observable('')
   self.selectedTokens = ko.observableArray([])
   self.tokens = ko.observableArray([])
@@ -122,7 +120,7 @@ function ConnectDialog () {
     if (ui.detectWebRTC) {
       ui.webrtc = true
     }
-    ui.connect(self.username(), self.address(), self.port(), self.tokens(), self.password(), self.channelName())
+    ui.connect(self.username(), self.tokens(), self.password(), self.channelName())
   }
 
   self.addToken = function() {
@@ -442,17 +440,18 @@ class GlobalBindings {
       return '[' + new Date().toLocaleTimeString(navigator.language) + ']'
     }
 
-    this.connect = (username, host, port, tokens = [], password, channelName = "") => {
+    this.connect = (username, tokens = [], password, channelName = "") => {
 
       // if browser support Notification request permission
       if ('Notification' in window) Notification.requestPermission()
 
       this.resetClient()
 
-      this.remoteHost(host)
-      this.remotePort(port)
+      this.remoteHost(location.hostname)
+      this.remotePort(location.port)
 
-      log(translate('logentry.connecting'), host)
+      const url = `${location.protocol == 'http:' ? 'ws' : 'wss'}://${location.host}${location.pathname}`
+      log(translate('logentry.connecting'), url)
 
       // Note: This call needs to be delayed until the user has interacted with
       // the page in some way (which at this point they have), see: https://goo.gl/7K7WLu
@@ -468,7 +467,7 @@ class GlobalBindings {
       }
 
       // TODO: token
-      (this.webrtc ? this.webrtcConnector : this.fallbackConnector).connect(`wss://${host}:${port}`, {
+      (this.webrtc ? this.webrtcConnector : this.fallbackConnector).connect(url, {
         username: username,
         password: password,
         webrtc: this.webrtc ? {
@@ -562,7 +561,7 @@ class GlobalBindings {
         } else if (err === 'server_does_not_support_webrtc' && this.detectWebRTC && this.webrtc) {
           log(translate('logentry.connection_fallback_mode'))
           this.webrtc = false
-          this.connect(username, host, port, tokens, password, channelName)
+          this.connect(username, tokens, password, channelName)
         } else {
           log(translate('logentry.connection_error'), err)
         }
@@ -1074,16 +1073,6 @@ function initializeUI () {
   var useJoinDialog = queryParams.joinDialog
   if (queryParams.matrix) {
     useJoinDialog = true
-  }
-  if (queryParams.address) {
-    ui.connectDialog.address(queryParams.address)
-  } else {
-    useJoinDialog = false
-  }
-  if (queryParams.port) {
-    ui.connectDialog.port(queryParams.port)
-  } else {
-    useJoinDialog = false
   }
   if (queryParams.token) {
     var tokens = queryParams.token
