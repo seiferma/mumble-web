@@ -1,11 +1,10 @@
-FROM alpine:edge
+FROM alpine:latest
 
 LABEL maintainer="Andreas Peters <support@aventer.biz>"
 
 COPY ./ /home/node
 
-RUN echo http://nl.alpinelinux.org/alpine/edge/testing >> /etc/apk/repositories && \
-    apk add --no-cache git nodejs npm tini websockify && \
+RUN apk add --no-cache git nodejs npm tini websockify && \
     adduser -D -g 1001 -u 1001 -h /home/node node && \
     mkdir -p /home/node && \
     mkdir -p /home/node/.npm-global && \
